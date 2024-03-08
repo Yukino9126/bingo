@@ -10,10 +10,17 @@ def client(network, port):
     # set bingo list
     block_status = [False] * 25
     
-    name = input('Enter your name:')
+    name = input('Enter your name: ')
     numbers, numbers_str = shuffle()
     text = name + ',' + numbers_str
     # print(text)
+
+    # print numbers
+    print('Here is your table:')
+    for i in range(5):
+        for j in range(5):
+            print('{:3d}'.format(numbers[i*5+j]), end=' ')
+        print()
 
     # send name & numbers to server
     sock.sendto(text.encode('ascii'), (network, port))
@@ -35,9 +42,10 @@ def client(network, port):
             if message in numbers:
                 idx = numbers.index(message)
                 block_status[idx] = True
-                if check(block_status): # Bingo!
-                    sock.sendto('Bingo'.encode('ascii'), (network, port))
-                    pass
+            if check(block_status): # Bingo!
+                sock.sendto('Bingo'.encode('ascii'), (network, port))
+                print('Bingo! You are win!')
+                break
 
 
 if __name__ == '__main__':
