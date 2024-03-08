@@ -6,7 +6,7 @@ def shuffle():
     mylist = list(range(1,26))
     print(mylist)
     random.shuffle(mylist)
-    string = ' '.join([str(i) for i in mylist])
+    string = ','.join([str(i) for i in mylist])
     return string
 
 def check(bingo:list):
