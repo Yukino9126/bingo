@@ -1,12 +1,12 @@
-def shuffle():
+def get_card():
     '''
-    Return a list and a string of 25 random numbers.
+    Return a list of 25 random numbers(str).
     '''
     import random
-    mylist = list(range(1,26))
-    random.shuffle(mylist)
-    string = ','.join([str(i) for i in mylist])
-    return mylist, string
+    card = list(map(str, list(range(1,26))))
+    random.shuffle(card)
+    # string = ','.join([str(i) for i in mylist])
+    return card
 
 def gen_checklist():
     checklist = []
@@ -37,14 +37,14 @@ def gen_checklist():
     return checklist
 
 checklist = gen_checklist()
-def check(block_status:list):
+def check(card_status:list):
     '''
     Check if a 2-dem list bingo.
     '''
     line=0
 
     for c in checklist:
-        andlist = [ c[i] & block_status[i] for i in range(25) ]
+        andlist = [ c[i] & card_status[i] for i in range(25) ]
         if c == andlist:
             line += 1
     print(line)
