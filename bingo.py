@@ -1,13 +1,13 @@
 def shuffle():
     '''
-    Return a string of 25 random numbers.
+    Return a list and a string of 25 random numbers.
     '''
     import random
     mylist = list(range(1,26))
     print(mylist)
     random.shuffle(mylist)
     string = ','.join([str(i) for i in mylist])
-    return string
+    return mylist, string
 
 def gen_checklist():
     checklist = []
@@ -34,25 +34,23 @@ def gen_checklist():
         for i in 4, 8, 12, 16, 20:
             nulllist[i] = True
         checklist.append(nulllist)
-        
-def check(bingo:list):
+    return checklist
+
+checklist = gen_checklist()
+def check(block_status:list):
     '''
     Check if a 2-dem list bingo.
     '''
     line=0
 
-    '''
-    for i in range(0, 5):
-        flag1 = False
-        flag2 = False
+    for i in checklist:
+        if i == block_status:
+            line += 1
+    if line < 5:
+        return False
+    else:
+        return True
 
-        for j in range(0, 5):
-            if bingo[i][j] == bingo[i][j]
-                flag1 = True
-            if bingo[i][j] == bingo[i][j]
-                flag2 = True
-        if flag1: line += 1
-        if flag2: line += 1
-    '''
-
-    return
+if __name__ == '__main__':
+    mylist = map(bool, input().split())
+    print(check(mylist))
