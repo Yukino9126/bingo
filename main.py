@@ -1,5 +1,6 @@
-import server
-import client
+import argparse
+from server import *
+from client import *
 
 if __name__ == '__main__':
     choices = {'client': client, 'server': server}
