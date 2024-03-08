@@ -1,12 +1,13 @@
 def shuffle():
     '''
-    Return a list of 25 random numbers.
+    Return a string of 25 random numbers.
     '''
     import random
     mylist = list(range(1,26))
     print(mylist)
     random.shuffle(mylist)
-    return mylist
+    string = ' '.join([str(i) for i in mylist])
+    return string
 
 def check(bingo:list):
     '''
