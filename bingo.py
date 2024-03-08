@@ -4,7 +4,6 @@ def shuffle():
     '''
     import random
     mylist = list(range(1,26))
-    print(mylist)
     random.shuffle(mylist)
     string = ','.join([str(i) for i in mylist])
     return mylist, string
@@ -25,15 +24,16 @@ def gen_checklist():
             nulllist[p + 5 * i] = True
         checklist.append(nulllist)
 
-        # Slash
-        nulllist = [False]*25
-        for i in 0, 6, 12, 18, 24:
-            nulllist[i] = True
-        checklist.append(nulllist)
-        nulllist = [False]*25
-        for i in 4, 8, 12, 16, 20:
-            nulllist[i] = True
-        checklist.append(nulllist)
+    # Slash
+    nulllist = [False]*25
+    for i in 0, 6, 12, 18, 24:
+        nulllist[i] = True
+    checklist.append(nulllist)
+    nulllist = [False]*25
+    for i in 4, 8, 12, 16, 20:
+        nulllist[i] = True
+    checklist.append(nulllist)
+
     return checklist
 
 checklist = gen_checklist()
@@ -43,14 +43,18 @@ def check(block_status:list):
     '''
     line=0
 
-    for i in checklist:
-        if i == block_status:
+    for c in checklist:
+        andlist = [ c[i] & block_status[i] for i in range(25) ]
+        if c == andlist:
             line += 1
+    print(line)
     if line < 5:
         return False
     else:
         return True
 
 if __name__ == '__main__':
-    mylist = map(bool, input().split())
-    print(check(mylist))
+    while True:
+        mylist = list(map(int, input().split()))
+        print(mylist)
+        print(check(mylist))
