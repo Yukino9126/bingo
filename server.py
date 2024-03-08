@@ -2,10 +2,12 @@ import socket
 
 MAX_BYTES =65535
 
-def reclient(name, text, num):
+def reclient(text, num):
     
+    name = text.split(',')[0]
     for i in range(0,25):
-        recvlist[i] = text[i+1]
+        numlist[i] = text.split(',')[i+1]
+
     message = name + ", You are the " + num + 'player\n'
     return message
 
@@ -21,8 +23,7 @@ def server(interface, port):
         try:
             data, address = sock.recvfrom(MAX_BYTES)
             text = data.decode('ascii')
-            name, numlist = text.split(',') 
-            message = reclient(name, numlist, num)
+            message = reclient(text, num)
             sock.sendto(message.encode('ascii'), address)
             num +=1
         except socket.timeout as exc:
