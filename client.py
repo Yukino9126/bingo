@@ -4,16 +4,15 @@ import socket
 MAX_BYTES = 65535
 
 def client(network, port):
-    # set broadcast
-    # broadcast = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    # broadcast.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-    
-    # set unicast
+    # set socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    # set bingo list
+    block_status = [False] * 25
     
     name = input('Enter your name:')
-    numbers = shuffle()
-    text = name + ',' + numbers
+    numbers, numbers_str = shuffle()
+    text = name + ',' + numbers_str
     # print(text)
 
     # send name & numbers to server
@@ -33,9 +32,12 @@ def client(network, port):
             print('Somebody is Bingo, game over!')
             break
         else: # message is digit
-            pass
-
-
+            if message in numbers:
+                idx = numbers.index(message)
+                block_status[idx] = True
+                if check(block_status): # Bingo!
+                    sock.sendto('Bingo'.encode('ascii'), (network, port))
+                    pass
 
 
 if __name__ == '__main__':
