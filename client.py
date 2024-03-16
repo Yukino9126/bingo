@@ -1,9 +1,8 @@
 from bingo import *
+from colors import *
 import socket
 
 MAX_BYTES = 65535
-fgRed = '\033[31m'
-endColor = '\033[0m'
 
 def print_card(card, card_status):
     print('+----------------+')
@@ -26,7 +25,7 @@ def client(network, port):
     card_status = [False] * 25
     
     # prompt
-    print("""
+    print(fgYellow + """
 ______ _                   
 | ___ (_)                  
 | |_/ /_ _ __   __ _  ___  
@@ -35,7 +34,7 @@ ______ _
 \____/|_|_| |_|\__, |\___/ 
                 __/ |      
                |___/       
-            """)
+            """ + endColor)
     name = input('Enter your name to join the game: ')
     card = get_card()
     text = name + ',' + ','.join([i for i in card])
@@ -64,8 +63,11 @@ ______ _
         message = data.decode('ascii')
         
         if message.split(',')[0] == 'Bingo': # someone has bingo, game over
-            print('Somebody has Bingo. Game Over!')
-            print(message) # who wins
+            # print('Somebody has Bingo. Game Over!')
+            print(fgMagenta + message + endColor) # who wins
+            break
+        elif message == "Game Over!":
+            print("Game over. No one wins.")
             break
         else: # message is digit
             if message in card:
@@ -73,13 +75,18 @@ ______ _
                 card_status[idx] = True
                 print(message) # card number the server send this time
                 print_card(card, card_status)
-            # If someone bingo, the others would close connect.
-            else:
-                break
+            
             if check(card_status): # Bingo!        
                 sock.sendto('Bingo'.encode('ascii'), (network, port))
-                print('Bingo! You win!')
-                break
+                # server check
+                data, address = sock.recvfrom(MAX_BYTES)
+                message = data.decode('ascii')
+                print(message)
+                if message == "You are wrong.":
+                    continue
+                else:
+                    print(bgYellow +'Bingo! You win!' + endColor) 
+                    break
     
              
                
