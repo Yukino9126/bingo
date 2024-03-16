@@ -2,13 +2,18 @@ from bingo import *
 import socket
 
 MAX_BYTES = 65535
+fgRed = '\033[31m'
+endColor = '\033[0m'
 
-def print_card(card):
+def print_card(card, card_status):
     print('+----------------+')
     for i in range(5):
         print('| ', end='')
         for j in range(5):
-            print('{:2s}'.format(card[i*5+j]), end=' ')
+            if card_status[i*5+j]:
+                print(fgRed + '{:2s}'.format(card[i*5+j]) + endColor, end=' ')
+            else:
+                print('{:2s}'.format(card[i*5+j]), end=' ')
         print('|')
     print('+----------------+')
 
@@ -38,7 +43,7 @@ ______ _
     # print bingo card
     print()
     print(f'Hello {name}. Here is your bingo card:')
-    print_card(card)
+    print_card(card, card_status)
 
     # send name & numbers to server
     sock.sendto(text.encode('ascii'), (network, port))
@@ -46,22 +51,35 @@ ______ _
     # receive user_id & start_sec from server
     data, address = sock.recvfrom(MAX_BYTES)
     user_id, start_sec = data.decode('ascii').split(',')
-    print("You are the {user_id}'th player in the game.")
-    print('Game will be started in {start_sec} second(s).')
+    print(f"You are the {user_id} player in the game.")
+    print(f"Game will be started in {start_sec} second(s).")
+
+    data, address = sock.recvfrom(MAX_BYTES)
+    message = data.decode('ascii')
+    print(message)   
 
     # start listen to server to get the lucky number
     while True:
         data, address = sock.recvfrom(MAX_BYTES)
         message = data.decode('ascii')
-
-        if message == 'Bingo': # someone has bingo, game over
+        
+        if message.split(',')[0] == 'Bingo': # someone has bingo, game over
             print('Somebody has Bingo. Game Over!')
+            print(message) # who wins
             break
         else: # message is digit
             if message in card:
                 idx = card.index(message)
                 card_status[idx] = True
-            if check(card_status): # Bingo!
+                print(message) # card number the server send this time
+                print_card(card, card_status)
+            # If someone bingo, the others would close connect.
+            else:
+                break
+            if check(card_status): # Bingo!        
                 sock.sendto('Bingo'.encode('ascii'), (network, port))
                 print('Bingo! You win!')
                 break
+    
+             
+               
