@@ -1,12 +1,15 @@
 import socket
 import bingo
 import time
-
+from colors import *
+from inputfun import myInput as input
 
 MAX_BYTES = 65535
 
 def clientinfo(data, client):
-    
+    """
+    Catch player's name & card & order
+    """
     # split name & card
     name = data.split(',')[0]
     cardnum = data.split(',')[1:]
@@ -24,11 +27,17 @@ def clientinfo(data, client):
     return name, cardnum, client
 
 def startgame(sock, clientdict):
+    """
+    Tell the players start game.
+    """
     for i in range(len(clientdict)):
         data = "Time is up\n" "Let's start Bingo !!\n"
         sock.sendto(data.encode('ascii'), clientdict[i]['address'])
         
 def checkBingo(cardnum, currentList):
+    """
+    Bouble check if the player lie when he/she send 'Bingo' to the server.
+    """
     card_status = [False]*25
     for i in currentList:
         if i in cardnum:
@@ -39,8 +48,15 @@ def checkBingo(cardnum, currentList):
     return 0
 
 def sendnum(sock, clientdict, cards):
-    
+    """
+    Send lucky number the players and wait for 2 minutes to recv 'Bingo' from players, then do double check his/her card.
+    When the player wins, the server would send the message who the winner is  to the others.
+    """
     currentList = []
+    
+    # Test
+    delay = input(bgWhite + fgBlack + "How long do you need to wait the player to send 'Bingo'? [default: {}]: " + endColor, 2)
+
     # send lucky number
     for i in range(len(cards)):
         print('I say ', cards[i])
@@ -54,12 +70,12 @@ def sendnum(sock, clientdict, cards):
             
             try:
                 # wait 2 minutes check if someone bingo
-                sock.settimeout(2)
+                sock.settimeout(float(delay))
 
                 # recv 'Bingo' message
                 bingomess, address = sock.recvfrom(MAX_BYTES)
                 if bingomess.decode('ascii') == 'Bingo':
-                    print('message:someone bingo, please check this guy') # tell server to check if he/she lies
+                    print(fgRed + bgYellow + f'message: {address} bingo, please check '+ endColor) # tell server to check if he/she lies
                     
                     # check if lie
                     for i in range(len(clientdict)):
@@ -70,11 +86,13 @@ def sendnum(sock, clientdict, cards):
                             for j in range(len(clientdict)):
                                 sock.sendto(data.encode('ascii'), clientdict[j]['address'])
                             return 0
+                    
                     # lie
-                    sock.sendto('You are wrong'.encode('ascii'), address)
+                    sock.sendto('You are wrong.'.encode('ascii'), address)
                    
             except socket.timeout:
                 continue
+   
 
 def server(interface, port):
 
@@ -83,29 +101,31 @@ def server(interface, port):
     sock.bind((interface, port))
     print('Listening at', sock.getsockname())
     
-    clientcard = []
     deadline = 0
     client = 0
-    allclient = []
-    clientname = []
     clientdict = []
+    
+    # Test:
+    delay = input(bgWhite + fgBlack + "From now on, we will begin in ? seconds [default : {}]: " + endColor, 20)
+    
     while True:
         try:
             # recv name & card
             data, address = sock.recvfrom(MAX_BYTES)
             data = data.decode('ascii')
-            print(data)
+            #print(data)
             
             client += 1 # next player's order
             
             # collect all client's name, card, order
             name, cardnum, clientnum = clientinfo(data, client)
+            printplayerinfo = clientnum + " players: " + name + "\naddress: " + address[0] + "\ncard: "  
+            print(fgGreen + printplayerinfo +  ','.join(str(cardnum[i]) for i in range(25)) + endColor + '\n-------------------------------')
             clientdict.append({'name':name, 'client':clientnum, 'address':address, 'cardnum':cardnum})
-            #clientname.append(name)
 
             # The game will start until the first player come in
             if client == 1:
-                deadline = time.time() + 5
+                deadline = time.time() + float(delay)
             sock.settimeout(deadline - time.time())
 
             # remain time
@@ -120,7 +140,7 @@ def server(interface, port):
            startgame(sock, clientdict)
            break
 
-    # send lucky number to players 
+    # get lucky number  
     cards = bingo.get_card()
     
     # send lucky number
@@ -129,3 +149,10 @@ def server(interface, port):
     # someone bingo
     if not continuegame :
         print('Game over')
+        # broadcast to everyone who bingo
+    
+    # Game over    
+    for i in range(len(clientdict)):
+        data = "Game Over!"
+        sock.sendto(data.encode('ascii'), clientdict[i]['address'])
+      
