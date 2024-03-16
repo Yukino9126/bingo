@@ -47,7 +47,7 @@ def check(card_status:list):
         andlist = [ c[i] & card_status[i] for i in range(25) ]
         if c == andlist:
             line += 1
-    print(line)
+    #print(line)
     if line < 5:
         return False
     else:
