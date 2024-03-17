@@ -65,9 +65,10 @@ ______ _
         if message.split(',')[0] == 'Bingo': # someone has bingo, game over
             # print('Somebody has Bingo. Game Over!')
             print(fgMagenta + message + endColor) # who wins
+            print("Game Over.")
             break
         elif message == "Game Over!":
-            print("Game over. No one wins.")
+            print("Game Over. No one wins.")
             break
         else: # message is digit
             if message in card:
