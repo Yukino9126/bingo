@@ -54,13 +54,13 @@ def checkBingo(cardnum:list, currentList:list):
 
 def sendnum(sock:socket.socket, clientdict:list, cards:list):
     """
-    Send lucky number the players and wait for 2 minutes to recv 'Bingo' from players, then do double check his/her card.
+    Send lucky number the players and wait for 2 seconds to recv 'Bingo' from players, then do double check his/her card.
     When the player wins, the server would send the message who the winner is  to the others.
     """
     currentList = []
     
     # Test
-    delay = input(bgWhite + fgBlack + "How long do you need to wait the player to send 'Bingo'? [default: {}]: " + endColor, 2)
+    delay = input(bgWhite + fgBlack + "How long do you need to wait the player to send 'Bingo'?(seconds) [default: {}]: " + endColor, 2)
 
     # send lucky number
     for i in range(len(cards)):
@@ -73,7 +73,7 @@ def sendnum(sock:socket.socket, clientdict:list, cards:list):
         currentList.append(cards[i])
             
         try:
-            # wait 2 minutes check if someone bingo
+            # wait 2 seconds check if someone bingo
             sock.settimeout(float(delay))
 
             # recv 'Bingo' message
