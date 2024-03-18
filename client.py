@@ -1,4 +1,4 @@
-from bingo import *
+from utils import *
 from colors import *
 import socket
 

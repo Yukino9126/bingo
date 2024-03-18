@@ -1,5 +1,5 @@
 import socket
-import bingo
+import utils
 import time
 from colors import *
 from inputfun import myInput as input
@@ -48,7 +48,7 @@ def checkBingo(cardnum:list, currentList:list):
         if i in cardnum:
             idx = cardnum.index(i)
             card_status[idx] = True
-        if bingo.check(card_status): # Bingo!
+        if utils.check(card_status): # Bingo!
              return 1
     return 0
 
@@ -145,7 +145,7 @@ def server(interface:str, port:int):
            break
 
     # get lucky number  
-    cards = bingo.get_card()
+    cards = utils.get_card()
     
     # send lucky number
     continuegame = sendnum(sock, clientdict, cards)
