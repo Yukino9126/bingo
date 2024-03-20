@@ -2,7 +2,6 @@ from utils import *
 from colors import *
 import socket
 
-MAX_BYTES = 65535
 
 def print_card(card, card_status):
     print('+----------------+')
@@ -88,6 +87,3 @@ ______ _
                 else:
                     print(bgYellow +'Bingo! You win!' + endColor) 
                     break
-    
-             
-               

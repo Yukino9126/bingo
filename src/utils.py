@@ -1,3 +1,6 @@
+MAX_BYTES = 65535
+
+
 def get_card():
     '''
     Return a list of 25 random numbers(str).
@@ -7,6 +10,7 @@ def get_card():
     random.shuffle(card)
     # string = ','.join([str(i) for i in mylist])
     return card
+
 
 def gen_checklist():
     checklist = []
@@ -35,6 +39,7 @@ def gen_checklist():
     checklist.append(nulllist)
 
     return checklist
+
 
 checklist = gen_checklist()
 def check(card_status:list):

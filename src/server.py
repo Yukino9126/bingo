@@ -1,10 +1,9 @@
 import socket
-import utils
 import time
+from  utils import *
 from colors import *
 from inputfun import myInput as input
 
-MAX_BYTES = 65535
 
 def clientinfo(data:list, client:int):
     """
@@ -25,6 +24,8 @@ def clientinfo(data:list, client:int):
         client = str(client) + 'th'
 
     return name, cardnum, client
+
+
 def broadcast(sock:socket.socket, data:str, clientdict:list):
     """
     Broadcast to every players.
@@ -32,12 +33,14 @@ def broadcast(sock:socket.socket, data:str, clientdict:list):
     for i in range(len(clientdict)):
         sock.sendto(data.encode('ascii'), clientdict[i]['address'])
 
+
 def startgame(sock:socket.socket, clientdict:list):
     """
     Tell the players start game.
     """
     data = "Time is up\n" "Let's start Bingo !!\n"
     broadcast(sock, data, clientdict)
+
 
 def checkBingo(cardnum:list, currentList:list):
     """
@@ -48,9 +51,10 @@ def checkBingo(cardnum:list, currentList:list):
         if i in cardnum:
             idx = cardnum.index(i)
             card_status[idx] = True
-        if utils.check(card_status): # Bingo!
+        if check(card_status): # Bingo!
              return 1
     return 0
+
 
 def sendnum(sock:socket.socket, clientdict:list, cards:list):
     """
@@ -145,7 +149,7 @@ def server(interface:str, port:int):
            break
 
     # get lucky number  
-    cards = utils.get_card()
+    cards = get_card()
     
     # send lucky number
     continuegame = sendnum(sock, clientdict, cards)
@@ -157,4 +161,3 @@ def server(interface:str, port:int):
     # Game over    
     data = "Game Over!"
     broadcast(sock, data, clientdict)
-      
