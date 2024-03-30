@@ -5,7 +5,7 @@ from client import *
 
 if __name__ == '__main__':
     choices = {'client': client, 'server': server}
-    parser = argparse.ArgumentParser(description='Send, receive UDP broadcast')
+    parser = argparse.ArgumentParser(description='Online Bingo Game')
     parser.add_argument('role', choices=choices, help='which role to take')
     parser.add_argument('host', help='interface the server listens at;'
                         ' network the client sends to')
