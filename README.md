@@ -1,6 +1,6 @@
 # Bingo
 
-A homework for Python Network Programming in NCNU.
+「Python 網路程式設計」課程作業 (2024)：使用 0MQ 改寫前一次[分組作業](https://github.com/ryanycs/bingo)，此次為個人作業。
 
 ## Description
 
