@@ -1,4 +1,4 @@
-import socket
+import socket, zmq
 import time
 from  utils import *
 from colors import *
@@ -26,20 +26,29 @@ def clientinfo(data:list, client:int):
     return name, cardnum, client
 
 
-def broadcast(sock:socket.socket, data:str, clientdict:list):
+def broadcast(sock:socket.socket, data:str):
     """
     Broadcast to every players.
     """
-    for i in range(len(clientdict)):
-        sock.sendto(data.encode('ascii'), clientdict[i]['address'])
+    sock.send_string(data)
 
+def init_zmq(host, rep_port, pub_port):
+    if host =='': host = '*'
+    context = zmq.Context()
+    # Response
+    repsock = context.socket(zmq.REP)
+    repsock.bind(f'tcp://{host}:{rep_port}')
+    # Publish
+    pubsock = context.socket(zmq.PUB)
+    pubsock.bind(f'tcp://{host}:{pub_port}')
+    return repsock, pubsock
 
-def startgame(sock:socket.socket, clientdict:list):
+def startgame(repsock, pubsock, clientdict:list):
     """
     Tell the players start game.
     """
     data = "Time is up\n" "Let's start Bingo !!\n"
-    broadcast(sock, data, clientdict)
+    broadcast(repsock, data)
 
 
 def checkBingo(cardnum:list, currentList:list):
@@ -56,7 +65,7 @@ def checkBingo(cardnum:list, currentList:list):
     return 0
 
 
-def sendnum(sock:socket.socket, clientdict:list, cards:list):
+def sendnum(repsock, pubsock, clientdict:list, cards:list):
     """
     Send lucky number the players and wait for 2 seconds to recv 'Bingo' from players, then do double check his/her card.
     When the player wins, the server would send the message who the winner is  to the others.
@@ -71,43 +80,44 @@ def sendnum(sock:socket.socket, clientdict:list, cards:list):
         print('I say ', cards[i])
         
         # broadcast lucky number
-        broadcast(sock, cards[i], clientdict)
+        broadcast(pubsock, cards[i])
 
         # record lucky number has sent
         currentList.append(cards[i])
             
         try:
             # wait 2 seconds check if someone bingo
-            sock.settimeout(float(delay))
+            repsock.RCVTIMEO = int(delay) * 1000
 
             # recv 'Bingo' message
-            bingomess, address = sock.recvfrom(MAX_BYTES)
-            if bingomess.decode('ascii') == 'Bingo':
-                print(fgRed + bgYellow + f'message: {address} bingo, please check '+ endColor) # tell server to check if he/she lies
+            data = repsock.recv_string().split(',')
+            if data[1] == 'Bingo':
+                print(fgRed + bgYellow + f'message: {data[0]} bingo, please check '+ endColor) # tell server to check if he/she lies
                         
                 # check if lie
                 for i in range(len(clientdict)):
-                   if address[0] in clientdict[i]['address'][0] and checkBingo(clientdict[i]['cardnum'], currentList):
-                       data = 'Bingo,' + clientdict[i]['name'] + ' from ' + address[0]
+                   if data[0] in clientdict[i]['name'] and checkBingo(clientdict[i]['cardnum'], currentList):
+                       data = 'Bingo,' + clientdict[i]['name']
                        print(data) # tell server who bingo
                        
                        # broadcast to everyone who bingo
-                       broadcast(sock, data, clientdict)
+                       broadcast(pubsock, data)
+                       repsock.send_string('You win!')
                        return 0
                     
                 # lie
-                sock.sendto('You are wrong.'.encode('ascii'), address)
+                repsock.send_string('You are wrong.')
                    
-        except socket.timeout:
+        except zmq.error.Again:
             continue
    
 
-def server(interface:str, port:int):
+def server(interface:str, repport:int, pubport:int):
 
-    # create socket
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind((interface, port))
-    print('Listening at', sock.getsockname())
+    # create ZMQ
+    repsock, pubsock = init_zmq(interface, repport, pubport)
+    print(f'REP: {interface}:{repport}')
+    print(f'PUB: {interface}:{pubport}')
     
     deadline = 0
     client = 0
@@ -118,46 +128,39 @@ def server(interface:str, port:int):
     
     while True:
         try:
-            # recv name & card
-            data, address = sock.recvfrom(MAX_BYTES)
-            data = data.decode('ascii')
-            #print(data)
+            data = repsock.recv_string()
             
             client += 1 # next player's order
             
             # collect all client's name, card, order
             name, cardnum, clientnum = clientinfo(data, client)
-            printplayerinfo = str(clientnum) + " players: " + name + "\naddress: " + address[0] + "\ncard: "  
+            printplayerinfo = str(clientnum) + " players: " + name + "\ncard: "  
             print(fgGreen + printplayerinfo +  ','.join(str(cardnum[i]) for i in range(25)) + endColor + '\n-------------------------------')
-            clientdict.append({'name':name, 'client':clientnum, 'address':address, 'cardnum':cardnum})
+            clientdict.append({'name':name, 'client':clientnum, 'cardnum':cardnum})
 
             # The game will start until the first player come in
             if client == 1:
                 deadline = time.time() + float(delay)
-            sock.settimeout(deadline - time.time())
+            repsock.RCVTIMEO = int((deadline - time.time()) * 1000)
 
             # remain time
             remaintime = deadline - time.time()
            
             # The player's order and the remain time
             message = str(clientnum) + ',' + str(int(remaintime))
-            sock.sendto(message.encode('ascii'), address)
+            repsock.send_string(message)
 
-        except socket.timeout:
+        except zmq.error.Again:
            # Time is up and start game
-           startgame(sock, clientdict)
+           startgame(pubsock, pubsock, clientdict)
            break
 
     # get lucky number  
     cards = get_card()
     
     # send lucky number
-    continuegame = sendnum(sock, clientdict, cards)
+    continuegame = sendnum(repsock, pubsock, clientdict, cards)
 
     # someone bingo
     if not continuegame :
-        print('Game over')
-    
-    # Game over    
-    data = "Game Over!"
-    broadcast(sock, data, clientdict)
+        print('Game over!')

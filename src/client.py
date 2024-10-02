@@ -1,6 +1,6 @@
 from utils import *
 from colors import *
-import socket
+import socket, zmq
 
 
 def print_card(card, card_status):
@@ -15,10 +15,25 @@ def print_card(card, card_status):
         print('|')
     print('+----------------+')
 
+def init_zmq(host, req_port, sub_port):
+    if host =='': host = '*'
+    context = zmq.Context()
+    # Request
+    reqsock = context.socket(zmq.REQ)
+    reqsock.connect(f'tcp://{host}:{req_port}')
+    # Subscribe
+    subsock = context.socket(zmq.SUB)
+    subsock.connect(f'tcp://{host}:{sub_port}')
+    subsock.setsockopt_string(zmq.SUBSCRIBE, '')
+    return reqsock, subsock
 
-def client(network, port):
-    # create socket
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+def subscribe(zmqsock):
+    msg = zmqsock.recv_string()
+    return msg
+
+def client(network, reqport, subport):
+    # create zmq
+    reqsock, subsock = init_zmq(network, reqport, subport)
 
     # set bingo list
     card_status = [False] * 25
@@ -44,22 +59,20 @@ ______ _
     print_card(card, card_status)
 
     # send name & numbers to server
-    sock.sendto(text.encode('ascii'), (network, port))
+    reqsock.send_string(text)
 
     # receive user_id & start_sec from server
-    data, address = sock.recvfrom(MAX_BYTES)
-    user_id, start_sec = data.decode('ascii').split(',')
+    data = reqsock.recv_string()
+    user_id, start_sec = data.split(',')
     print(f"You are the {user_id} player in the game.")
     print(f"Game will be started in {start_sec} second(s).")
 
-    data, address = sock.recvfrom(MAX_BYTES)
-    message = data.decode('ascii')
+    message = subscribe(subsock)
     print(message)   
 
     # start listen to server to get the lucky number
     while True:
-        data, address = sock.recvfrom(MAX_BYTES)
-        message = data.decode('ascii')
+        message = subscribe(subsock)
         
         if message.split(',')[0] == 'Bingo': # someone has bingo, game over
             # print('Somebody has Bingo. Game Over!')
@@ -77,13 +90,20 @@ ______ _
                 print_card(card, card_status)
             
             if check(card_status): # Bingo!        
-                sock.sendto('Bingo'.encode('ascii'), (network, port))
+                data = name + ',Bingo'
+                reqsock.send_string(data)
                 # server check
-                data, address = sock.recvfrom(MAX_BYTES)
-                message = data.decode('ascii')
-                print(message)
-                if message == "You are wrong.":
-                    continue
-                else:
+                try:
+                    reqsock.RCVTIMEO = 2000
+
+                    message = reqsock.recv_string()
+                    if message == "You are wrong.":
+                        print('You are wrong')
+                    elif message == 'You win!':
+                        print('You win!')
+                except zmq.error.Again:
+                    pass
+                '''
                     print(bgYellow +'Bingo! You win!' + endColor) 
                     break
+                '''
